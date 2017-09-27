@@ -1,0 +1,145 @@
+id,code,sname
+1,P,Pressure
+2,GEOP,Geop
+3,GEOM,Geom
+4,T,Temperature
+5,MaxT,MaximumTemperature
+6,MinT,MinimumTemperature
+8,TPOT,Tpot
+9,THETAW,Thetaw
+10,TD,Dewpoint
+12,Q,Ominaiskosteus
+13,RH,Relative Humidity
+20,WD,Wind Direction 10M
+21,WS,Wind Speed
+22,WIND,Wind
+23,U,U
+24,V,V
+25,,U-Gust
+26,,V-Gust
+28,M20Z,-20C Height
+39,,Vertical Velocity
+43,VERT,Wertical Velocity mms
+47,PrecipitableWater,PrecipitableWater
+48,RRCON,Convective Rain
+49,RR1H,Exact rr1h
+50,PRECACC,Accumulated Total Precipitation
+55,RRLAR,Rain
+56,PRET,PRET
+57,PREF,PREF
+59,CAPE,CAPE
+66,CIN,CIN
+67,Helicity,Helicity
+79,N,Total Cloudiness
+80,KIND,K Index
+126,RADARREF,Radar Reflectivity
+161,CT,Cloud Top
+180,BL,Depth of boundary layer
+260,THUND,THUND
+262,FLASH,Flash
+264,SNOWACC,Snow Accumulation
+265,SA,SnowAcc
+267,,GraupelMR
+270,0CZ,0C Height
+271,,MiddleAndLowCloudCover
+272,ConvectiveCloudAmount,ConvectiveCloudAmount
+273,CL,CL
+274,CM,CM
+275,CH,CH
+276,CW,CloudWater
+277,,CloudIceMR
+279,,SnowMR
+281,FRLAND,Fraction of Land
+301,TKE,TKE
+314,PS_SATEL,Pseudosatel
+315,LRAD,Long Wave Radiation
+317,SRAD,Solar Radiation
+327,FOG,FOG
+328,CS,Cloud Symbol
+336,HSADE,HSADE
+338,HESSAA,HESSAA
+353,RR,RR
+381,Z0,Roughness
+407,VIS,Visibility
+414,CEILING,Cloud Ceiling
+467,GUST,Wind Gust
+472,STATP,Station Pressure
+480,ICING,Icing
+500,CLB,CloudBase
+501,,1Cloud Cover
+502,,1Cloud Base HFT
+503,,2Cloud Cover
+504,,2Cloud Base HFT
+505,,3Cloud Cover
+506,,3Cloud Base HFT
+507,,4Cloud Cover
+508,,4Cloud Base HFT
+513,,Cloud Ceiling HFT
+514,WG,Wind Gusts KT
+515,VIS,Aviation Visibility M
+516,VV,Vertical Visibility HFT
+517,WS,Wind Speed KT
+521,WW1,Aviation Weather1
+522,WW2,Aviation Weather2
+523,WW3,Aviation Weather3
+524,,PackedAviationCloud1
+525,,PackedAviationCloud2
+526,,PackedAviationCloud3
+527,,PackedAviationCloud4
+745,,1Cloud Type
+746,,2Cloud Type
+747,,3Cloud Type
+748,,4Cloud Type
+840,,MetarObservationType
+851,DIW,De-Icing Index
+860,DIW_0,Cat 0 Prob
+861,DIW_1,Cat 1 Prob
+862,DIW_2,Cat 2 Prob
+863,DIW_3,Cat 3 Prob
+864,DIW_4,Cat 4 Prob
+870,PDSN_0,Prob Dry Snow 0
+871,PDSN_1,Prob Dry Snow 1
+872,PDSN_2,Prob Dry Snow 2
+873,PDSN_3,Prob Dry Snow 3
+880,PWSN_0,Prob Wet Snow 0
+881,PWSN_1,Prob Wet Snow 1
+882,PWSN_2,Prob Wet Snow 2
+883,PWSN_3,Prob Wet Snow 3
+892,PFZ,Prob of Freezing Rain
+893,PFZRWY,Freezing Runway Prob
+896,PLVP_0,Low Visibility Prob Class 0
+897,PLVP_1,Low Visivility Prob Class 1
+898,PLVP_2,Low Visibility Prob Class 2
+899,PLVP_3,Low Visibility Prob Class 3
+1003,,Normal
+1103,,RRA
+1159,SR,Sun Radiation
+1160,LR,Long Wave Radiation
+1161,LNR,Long Wave Net Radiation
+1162,SNR,Short Wave Net Radiation
+1163,AR,Ambient Radiation
+1164,CAT,ClearAirTurbulence
+1168,GRR,Graupel rate
+1170,SPR,Solid prepicitation rate
+1174,CLT,CloudTop
+1198,ICE,Icing warning index
+1203,,AAA
+1204,PREF,M-OL
+1205,PREFMP,PREFMP
+1206,PREFPP,PREFPP
+1207,QNH,QNH
+1208,InstantPrecTotal,InstantPrecTotal
+1216,TOPL2-N,TOPL2-N
+1217,TOPL3-N,TOPL3-N
+1219,ProbDrizzle,ProbDrizzle
+1220,ProbRain,ProbRain
+1221,ProbSleet,ProbSleet
+1222,ProbSnow,ProbSnow
+1223,ProbFrDrzzl,ProbFrDrzzl
+1224,ProbFrRain,ProbFrRain
+1225,BoundaryLayerTurbulence,BoundaryLayerTurbulence
+1226,PPREF,Potential Precipitation Type
+1229,CL2-FT,CL2-FT
+1232,Himan VIS,Visibility (Himan)
+1303,,CCA
+10407,Himan VIS,Visibility (Himan)

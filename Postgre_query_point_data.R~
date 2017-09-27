@@ -1,0 +1,107 @@
+# Tämä skripti lataa aviation-tietokannasta METAR-havaintoja sekä eri malleille näkyvyysennusteita.
+rm(list=ls())
+
+# Välttämättömät asema- ja muuttujalistat yms.
+source("load_libraries_tables_and_open_connections.R")
+
+previ_ecmos_v_station_id <- asemalista_suomalaiset_lentokentat$wmon
+asemajoukko <- paste("suomalaiset_lentokentat",sep="")
+
+
+
+
+### MANUAALISEN METAR-DATAN HAKU AVIATION-TIETOKANNASTA, ELI EFHK-ASEMALTA ###
+
+# Tämän pitäisi olla ihan no-brainer -homma. Manuaalihavainnot on parsittu suoraan METAR:eista ja niitä on v. 2005 lähtien. Tekstimuotoiset METAR:it on haettu samasta taulusta kuin TAF:it
+source("hae_havainnot_aviation.R")
+# Haetaan pelkkä näkyvyys (tässä vaiheessa, myöhemmin voi halutessaan hakea lisää.)
+Id <- c(1,4,10,20,501,502,513,514,515,516,517,521,522,523)
+# Id <- 515 # (Aviation visibility M)
+sel_AQU <- Id
+station_id <- "all"
+
+# message_type 1 on manuaalihavainnot, numero 8 autohavainnot, 0 on SPECI-havainnot
+havainnot_METAR_1_all <- hae_havainnot_aviation(sel_AQU,station_id,1)
+save(havainnot_METAR_1_all,file="/data/statcal/results/R_projects/data_retrievals_aviation/havainnot_METAR_1_all.RData")
+rm(havainnot_METAR_1_all)
+havainnot_METAR_8_all <- hae_havainnot_aviation(sel_AQU,station_id,8)
+save(havainnot_METAR_8_all,file="/data/statcal/results/R_projects/data_retrievals_aviation/havainnot_METAR_8_all.RData")
+rm(havainnot_METAR_8_all)
+havainnot_METAR_0_all <- hae_havainnot_aviation(sel_AQU,station_id,0)
+save(havainnot_METAR_0_all,file="/data/statcal/results/R_projects/data_retrievals_aviation/havainnot_METAR_0_all.RData")
+rm(havainnot_METAR_0_all)
+rm(sel_AQU)
+rm(station_id)
+rm(Id)
+
+# Haetaan pelkät tekstimuotoiset METAR:it
+haku <- dbSendQuery(con3, "select mc.station_id, mc.ttime, message_type_id, mc.content from message_content mc where ttime between to_date('201707010000','YYYYMMDDHH24MI') and to_date('201712310000','YYYYMMDDHH24MI') and message_type_id IN (0,1,8);")
+METAR_teksti <- fetch(haku)
+rm(haku)
+names(METAR_teksti) <- c("station_id","obstime","message_type_id","content")
+# Ordering query
+METAR_teksti <- havainnot[order(METAR_teksti$station_id,METAR_teksti$message_type_id,METAR_teksti$obstime),]
+# Siistitään havaintomatriisin sarakkeet kunnolliseen muotoon
+METAR_teksti$obstime <- as.POSIXct(as.character(METAR_teksti$obstime),tz="GMT")
+# Removing duplicates
+if (sum(duplicated(METAR_teksti))>0) {
+  METAR_teksti <- METAR_teksti[-which(duplicated(METAR_teksti)),]
+}
+save(METAR_teksti,file="/data/statcal/results/R_projects/data_retrievals_aviation/METAR_teksti.RData")
+rm(METAR_teksti)
+
+
+
+
+
+
+
+
+
+
+### MALLIENNUSTEIDEN HAKU AVIATION-TIETOKANNASTA ###
+
+# Näkyvyys HIMAN + mallin oma kaikki asemat Harmonie+EC
+haku <- dbSendQuery(con3, "select l.station_id, mr.origintime, mtp.validtime, mr.model_id, mv.parameter_id, mv.rvalue from model_value mv, model_time_position mtp, modelrun mr, location l where mr.origintime between to_date('201708010000','YYYYMMDDHH24MI') and to_date('201712310000','YYYYMMDDHH24MI') and mv.parameter_id in (1232,10407,407,515) and l.level_type_id=1 and mr.model_id in (1,5) and mtp.modelrun_id=mr.id and mv.parent_id=mtp.id and mtp.location_id=l.id;")
+VIS_all_Har_EC <- fetch(haku)
+rm(haku)
+names(VIS_all_Har_EC) <- c("station_id","analysis_time","forecast_time","model_id","parameter_id","value")
+VIS_all_Har_EC <- havainnot[order(VIS_all_Har_EC$station_id,VIS_all_Har_EC$analysis_time,VIS_all_Har_EC$forecast_time,VIS_all_Har_EC$model_id,VIS_all_Har_EC$parameter_id),]
+# Siistitään havaintomatriisin sarakkeet kunnolliseen muotoon
+VIS_all_Har_EC$analysis_time <- as.POSIXct(as.character(VIS_all_Har_EC$analysis_time),tz="GMT")
+VIS_all_Har_EC$forecast_time <- as.POSIXct(as.character(VIS_all_Har_EC$forecast_time),tz="GMT")
+# Removing duplicates
+if (sum(duplicated(VIS_all_Har_EC))>0) {
+  VIS_all_Har_EC <- VIS_all_Har_EC[-which(duplicated(VIS_all_Har_EC)),]
+}
+save(VIS_all_Har_EC,file="/data/statcal/results/R_projects/data_retrievals_aviation/VIS_all_Har_EC.RData")
+rm(VIS_all_Har_EC)
+
+
+# Lämpötila+dewpoint+tuuli+sade kaikki asemat Harmonie+EC
+haku <- dbSendQuery(con3, "select l.station_id, mr.origintime, mtp.validtime, mr.model_id, mv.parameter_id, mv.rvalue from model_value mv, model_time_position mtp, modelrun mr, location l where mr.origintime between to_date('201708010000','YYYYMMDDHH24MI') and to_date('201712310000','YYYYMMDDHH24MI') and mv.parameter_id in (4,10,21,50) and l.level_type_id=1 and mr.model_id in (1,5) and mtp.modelrun_id=mr.id and mv.parent_id=mtp.id and mtp.location_id=l.id;")
+other_all_Har_EC <- fetch(haku)
+rm(haku)
+names(other_all_Har_EC) <- c("station_id","analysis_time","forecast_time","model_id","parameter_id","value")
+other_all_Har_EC <- havainnot[order(other_all_Har_EC$station_id,other_all_Har_EC$analysis_time,other_all_Har_EC$forecast_time,other_all_Har_EC$model_id,other_all_Har_EC$parameter_id),]
+# Siistitään havaintomatriisin sarakkeet kunnolliseen muotoon
+other_all_Har_EC$analysis_time <- as.POSIXct(as.character(other_all_Har_EC$analysis_time),tz="GMT")
+other_all_Har_EC$forecast_time <- as.POSIXct(as.character(other_all_Har_EC$forecast_time),tz="GMT")
+# Removing duplicates
+if (sum(duplicated(other_all_Har_EC))>0) {
+  other_all_Har_EC <- other_all_Har_EC[-which(duplicated(other_all_Har_EC)),]
+}
+save(other_all_Har_EC,file="/data/statcal/results/R_projects/data_retrievals_aviation/other_all_Har_EC.RData")
+rm(other_all_Har_EC)
+
+# # Kaikki asemat mitä tietokannasta löytyy, pelkkä Harmonie
+# haku <- dbSendQuery(con3, "select l.station_id as station_id, mr.origintime as analysis_time, mtp.validtime as forecast_time, mr.model_id, mv.parameter_id, mv.rvalue from model_value mv, model_time_position mtp, modelrun mr, location l where mr.origintime between to_date('200001010000','YYYYMMDDHH24MI') and to_date('201712310000','YYYYMMDDHH24MI') and mv.parameter_id in (1232,10407,407,515) and l.level_type_id=1 and mr.model_id in (5) and mtp.modelrun_id=mr.id and mv.parent_id=mtp.id and mtp.location_id=l.id order by station_id, origintime, validtime, model_id, parameter_id;")
+# VIS_all_Harmonie <- fetch(haku)
+# rm(haku)
+# save(VIS_all_Harmonie,file="VIS_all_Harmonie.RData")
+
+
+
+
+rm(con3)
+rm(drv)
