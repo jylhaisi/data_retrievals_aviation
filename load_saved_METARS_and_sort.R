@@ -63,7 +63,7 @@ names(assigned_data_frame)[2:dim(assigned_data_frame)[2]] <- paste0(all_metar_va
 assigned_data_frame[,1] <- all_time_stamps
 rm(all_time_stamps)
 # Going through one station at a time
-for (station_id_no in all_station_ids) {
+for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
   print(station_id_no)
   assigned_station_id <- paste0("station_id_",station_id_no)
   assign(assigned_station_id, assigned_data_frame)

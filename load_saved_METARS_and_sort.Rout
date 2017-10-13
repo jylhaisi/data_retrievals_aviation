@@ -1,0 +1,367 @@
+
+R version 3.3.2 (2016-10-31) -- "Sincere Pumpkin Patch"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-redhat-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # This script loads allMETARvars from RData files and sorts the data into stationwise files according to timestamp/variable number.
+> rm(list=ls())
+> 
+> loadRData <- function(fileName){
++   #loads an RData file into the function's own environment and returns it
++   load(fileName)
++   get(ls()[ls() != "fileName"])
++ }
+> 
+> # Välttämättömät asema- ja muuttujalistat yms.
+> source("../point_data_analysis/load_libraries_tables_and_open_connections.R")
+Loading required package: DBI
+Loading required package: rJava
+Loading required package: xlsxjars
+Loading required package: XML
+Loading required package: RCurl
+Loading required package: bitops
+
+Attaching package: ‘RCurl’
+
+The following object is masked from ‘package:rJava’:
+
+    clone
+
+
+Attaching package: ‘reshape2’
+
+The following objects are masked from ‘package:reshape’:
+
+    colsplit, melt, recast
+
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+
+Attaching package: ‘dplyr’
+
+The following object is masked from ‘package:reshape’:
+
+    rename
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:reshape2’:
+
+    smiths
+
+The following objects are masked from ‘package:reshape’:
+
+    expand, smiths
+
+The following object is masked from ‘package:RCurl’:
+
+    complete
+
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Loading required package: spam
+Loading required package: grid
+Spam version 1.4-0 (2016-08-29) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+Loading required package: fields
+Loading required package: maps
+Loading required package: sp
+Checking rgeos availability: FALSE
+ 	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
+ 	which has a restricted licence. It is disabled by default;
+ 	to enable gpclib, type gpclibPermit()
+General Polygon Clipper Library for R (version 1.5-5)
+	Type 'class ? gpc.poly' for help
+Loading required package: nlme
+
+Attaching package: ‘nlme’
+
+The following object is masked from ‘package:dplyr’:
+
+    collapse
+
+This is mgcv 1.8-15. For overview type 'help("mgcv-package")'.
+Loading required package: boot
+
+Attaching package: ‘boot’
+
+The following object is masked from ‘package:lattice’:
+
+    melanoma
+
+Loading required package: CircStats
+Loading required package: MASS
+
+Attaching package: ‘MASS’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: dtw
+Loading required package: proxy
+
+Attaching package: ‘proxy’
+
+The following object is masked from ‘package:spam’:
+
+    as.matrix
+
+The following objects are masked from ‘package:stats’:
+
+    as.dist, dist
+
+The following object is masked from ‘package:base’:
+
+    as.matrix
+
+Loaded dtw v1.18-1. See ?dtw for help, citation("dtw") for use in publication.
+
+
+Attaching package: ‘car’
+
+The following object is masked from ‘package:boot’:
+
+    logit
+
+The following object is masked from ‘package:dplyr’:
+
+    recode
+
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following object is masked from ‘package:tidyr’:
+
+    expand
+
+The following object is masked from ‘package:reshape’:
+
+    expand
+
+Loading required package: foreach
+Loaded glmnet 2.0-5
+
+
+Attaching package: ‘pls’
+
+The following object is masked from ‘package:stats’:
+
+    loadings
+
+
+Attaching package: ‘lubridate’
+
+The following object is masked from ‘package:reshape’:
+
+    stamp
+
+The following object is masked from ‘package:base’:
+
+    date
+
+This is package "smooth", v1.9.9
+
+Attaching package: ‘smooth’
+
+The following object is masked from ‘package:lubridate’:
+
+    hm
+
+The following object is masked from ‘package:nlme’:
+
+    getResponse
+
+> source("hae_aviation_scripts.R")
+> 
+> # THIS COMMENTED PART ONLY NEEDS TO BE RUN ONLY ONCE AS IT SAVES THE RESULTS TO FILES! THIS TAKES AWAY ALL THE NOT-NEEDED DATA FROM THE MONTHLY DATA FILES
+> # data_directory <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/")
+> # data_directory_output <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/only_20_50_observations/")
+> # # First altering result files so that they do not need to be individually altered in workspace for each station_id_no
+> # for (year in 2000:2017) {
+> #   for (month in 1:12) {
+> #     if (month<10) {
+> #       month1 <- paste("0",month,sep="")
+> #     } else {
+> #       month1 <- month
+> #     }
+> #     print(paste(year,month1))
+> #     ### Loading manual METAR data ###
+> #     data_file <- paste0(data_directory,"all_METARvarshavainnot_METAR_",year,"_",month1,"_8_allstations.RData")
+> #     month_data <- loadRData(data_file)
+> #     
+> #     # If data is not empty, remove all other than auto observations and observations that are not done on conventional observation times
+> #     if (do.call(dim,list(x=month_data))[1]!=0) {
+> #       # Only taking into account auto-METARS even if the data should not contain anything else (message_type_id==8)
+> #       month_data <- subset(month_data,message_type_id==8)
+> #       # Removing timestamps which are not either 20 past or 10 to (THERE IS QUITE A BIT OF THESE! THE SENSITIVITY OF THE RESULTS [ESPECIALLY DATA AVAILABILITY] TO THIS PHASE CAN BE SUBSTANTIAL!)
+> #       month_data <- month_data[which(format(month_data[["obstime"]],"%M") %in% c("20","50")),]
+> #     }
+> #     # Saving slightly altered data
+> #     save(file=paste0(data_directory_output,year,"_",month,".RData"),month_data)
+> #     rm(data_file)
+> #     rm(month_data)
+> #     rm(month1)
+> #   }
+> #   rm(month)
+> # }
+> # rm(year)
+> # rm(data_directory)
+> # rm(data_directory_output)
+> 
+> 
+> 
+> 
+> data_directory <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/only_20_50_observations/")
+> data_directory_sorted <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/only_20_50_observations/sorted/")
+> 
+> # Assigning result matrices (individually for each station, )
+> all_station_ids <- (unique(all_aviation_lists[["station"]]["id"]))
+> all_station_ids <- all_station_ids[order(all_station_ids$id),]
+> all_time_stamps <- seq(from = as.POSIXct("2000-01-01 00:20:00 GMT", tz = "GMT"), to = with_tz(round.POSIXt(Sys.time(), "hours"), tz = "GMT"), by = "30 mins")
+> all_metar_vars <- c(1,4,10,20,501,502,503,504,505,506,507,508,513,514,515,516,517,521,522,745,746,747,748,840)
+> assigned_data_frame <- data.frame(matrix(NA, ncol = length(all_metar_vars)+1, nrow = length(all_time_stamps)))
+> names(assigned_data_frame)[1] <- "obstime"
+> names(assigned_data_frame)[2:dim(assigned_data_frame)[2]] <- paste0(all_metar_vars)
+> assigned_data_frame[,1] <- all_time_stamps
+> rm(all_time_stamps)
+> # Going through one station at a time
+> for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
++   print(station_id_no)
++   assigned_station_id <- paste0("station_id_",station_id_no)
++   assign(assigned_station_id, assigned_data_frame)
++   # Data is retrieved in one month chunks, as otherwise the extent would be too much
++   for (year in 2000:2017) {
++     for (month in 1:12) {
++       if (month<10) {
++         month1 <- paste("0",month,sep="")
++       } else {
++         month1 <- month
++       }
++       # print(paste(year,month1))
++       ### Loading manual METAR data ###
++       data_file <- paste0(data_directory,year,"_",month,".RData")
++       month_data <- loadRData(data_file)
++       
++       # If data is empty, remove loaded data vector and move onto next month
++       if (do.call(dim,list(x=month_data))[1]==0) {
++         rm(data_file)
++         rm(month_data)
++         next
++       } else {
++         # picking station-wise data separately and assigning data to variable rows/columns where it belongs to.
++         station_id_data <- filter(month_data,station_id==station_id_no)
++         for (variable in 1:length(all_metar_vars)) {
++           station_id_variable_data <- filter(station_id_data,param_id==all_metar_vars[variable])
++           # This is too complicated...
++           # eval(subs(do.call(assign,x=as.name(assigned_station_id)[[(variable+1)]][match(station_id_variable_data[["obstime"]],as.name(assigned_station_id)[["obstime"]])], value=station_id_variable_data[["value"]])))
++           com_string <- paste0(assigned_station_id,"[[(variable+1)]][match(station_id_variable_data[[\"obstime\"]],",assigned_station_id,"[[\"obstime\"]])] <- station_id_variable_data[[\"value\"]]")
++           eval(parse(text=com_string))
++           rm(com_string)
++           rm(station_id_variable_data)
++         }
++         rm(variable)
++         rm(station_id_data)
++         # print(station_id_no)
++         
++         rm(data_file)
++         rm(month_data)
++       }
++       rm(month1)
++     }
++     rm(month)
++   }
++   rm(year)
++   
++   save(file=paste0(data_directory_sorted,assigned_station_id,"_sorted.RData"),list=assigned_station_id)
++   rm(assigned_station_id)
++ }
+[1] 361
+[1] 362
+[1] 363
+[1] 364
+[1] 365
+[1] 366
+[1] 367
+[1] 368
+[1] 369
+[1] 370
+[1] 371
+[1] 372
+[1] 373
+[1] 374
+[1] 375
+[1] 376
+[1] 377
+[1] 378
+[1] 379
+[1] 380
+[1] 381
+[1] 382
+[1] 383
+[1] 384
+[1] 385
+[1] 386
+[1] 387
+[1] 388
+[1] 389
+[1] 390
+[1] 391
+[1] 392
+[1] 393
+[1] 394
+[1] 395
+[1] 396
+[1] 397
+[1] 398
+[1] 399
+[1] 400
+> rm(station_id_no)
+> 
+> proc.time()
+   user  system elapsed 
+811.681  53.794 881.504 
