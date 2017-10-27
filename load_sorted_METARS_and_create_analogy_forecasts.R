@@ -2,7 +2,7 @@
 rm(list=ls())
 library(foreach)
 library(doParallel)
-registerDoParallel()
+registerDoParallel(cores=6)
 
 # A few functions that are needed
 # This function loads RData and assigns it to the variable defined by user
@@ -172,7 +172,7 @@ foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar%
   # How much data does each variable have? Saving data availability to matrix covering all stations
   available_data <- unlist(lapply(station_data[,-1],function (x) {sum(!is.na(x))})) / do.call(dim,list(x=station_data))[1] * 100
   all_available_data[match(station_id_no,all_station_ids), match(names(available_data),dimnames(all_available_data)[[2]])] <- available_data
-  save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_pct"),list="available_data")
+  save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_pct.RData"),list="available_data")
   rm(available_data)
   
   # Interpolating missing values using LINEAR interpolation
@@ -181,7 +181,7 @@ foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar%
   # How much data does each INTERPOLATED variable have? Saving data availability to matrix covering all stations
   available_data <- unlist(lapply(station_data[,-1],function (x) {sum(!is.na(x))})) / do.call(dim,list(x=station_data))[1] * 100
   all_available_data_interpolated[match(station_id_no,all_station_ids), match(names(available_data),dimnames(all_available_data_interpolated)[[2]])] <- available_data
-  save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_interpolated_pct"),list="available_data")
+  save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_interpolated_pct.RData"),list="available_data")
   rm(available_data)
   
   # If data is completely empty, remove loaded data vector and move onto next month
@@ -222,7 +222,7 @@ foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar%
     # Going through every data point in forecast_data (all_forecast_times indicate dates which are forecasted)
     for (row1 in match(all_forecast_times,station_data$obstime)) {
       # row1 <- match(all_forecast_times,station_data$obstime)[2030] # aja ristiin indeksit 298075 (488) ja 307327 (2030)
-      print(row1)
+      print(paste0("station",station_id_no,", timestep",match(row1,match(all_forecast_times,station_data$obstime)),"/",length(match(all_forecast_times,station_data$obstime))))
       # Assign training data
       if (row1>length(timestep_weights)) {
         training_data <- station_data[((row1-length(timestep_weights)+1):row1),(which(!is.na(variable_weights))+1)]
@@ -243,7 +243,7 @@ foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar%
         # similarity_indices <- rep(NA,length(training_rows2))
         # Going through training rows one-by-one)
         for (row2 in training_rows2) {
-          print(row2)
+          # print(row2)
           # Only proceeding if the similarity between these two stations has not been calculated earlier
           if (is.na(similarity_matrix[match(row1,dimnames(similarity_matrix)[[1]]),match(row2,dimnames(similarity_matrix)[[2]])])) {
             training_data_history <- station_data[((row2-length(timestep_weights)+1):row2),(which(!is.na(variable_weights))+1)]
