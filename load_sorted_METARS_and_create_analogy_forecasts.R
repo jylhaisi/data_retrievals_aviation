@@ -1,5 +1,8 @@
 # This script loads allMETARvars from RData files and sorts the data into stationwise files according to timestamp/variable number.
 rm(list=ls())
+library(foreach)
+library(doParallel)
+registerDoParallel()
 
 # A few functions that are needed
 # This function loads RData and assigns it to the variable defined by user
@@ -27,10 +30,10 @@ all_station_ids <- (unique(all_aviation_lists[["station"]]["id"]))
 all_station_ids <- all_station_ids[order(all_station_ids$id),]
 # Defining additional variables 888 and 889. These mark the hour of the day (used in defining difference in hours) and day of the year (used in defining difference in days)
 all_metar_vars <- c(1,4,10,20,501,502,503,504,505,506,507,508,513,514,515,516,517,521,522,745,746,747,748,840,888,889)
-begin_date=as.POSIXct("2017-06-01 00:20:00 GMT",tz="GMT")
-end_date=as.POSIXct("2017-06-01 03:20:00 GMT",tz="GMT")
-# begin_date=as.POSIXct("2016-11-01 00:20:00 GMT",tz="GMT")
-# end_date=as.POSIXct("2017-09-01 00:20:00 GMT",tz="GMT")
+# begin_date=as.POSIXct("2017-07-01 00:20:00 GMT",tz="GMT")
+# end_date=as.POSIXct("2017-07-25 06:20:00 GMT",tz="GMT")
+begin_date=as.POSIXct("2016-11-01 00:20:00 GMT",tz="GMT")
+end_date=as.POSIXct("2017-09-01 00:20:00 GMT",tz="GMT")
 # end_date=as.POSIXct(Sys.time(),tz="GMT")
 all_forecast_times <- seq(from=begin_date, to=end_date, by="3 hour")
 
@@ -87,7 +90,7 @@ all_fuzzy_sets[variable_indices] <- lapply(all_fuzzy_sets[variable_indices],func
 # INDIVIDUAL WEIGHTS OF THE VARIABLES IN METARS (HOW ABOUT APPLYING AHP LIKE IN TUBA AND ZOLTAN, 2016 OR SIMPLY TRYING THE WEIGHTS FROM TABLE 1? IN THE PAER, "WITHOUT AHP" -FORECAST REFERS TO EQUAL WEIGHTS FOR THE VARIABLES!)
 # Note here that several parameters would be interesting to use in analogy forecasting, but the lack of their availability prevents them to be used
 # all_aviation_lists$parameter[match(all_metar_vars,all_aviation_lists$parameter$id),]
-variable_weights <- c(2,3,4,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,8,NA,2,NA,NA,NA,NA,NA,NA,NA,4,2)
+variable_weights <- c(2,3,3,4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,9,NA,2,NA,NA,NA,NA,NA,NA,NA,3,2)
 # Normalizing
 variable_weights <- variable_weights / max(variable_weights,na.rm=T)
 names(variable_weights) <- paste0("variable_",all_metar_vars)
@@ -95,10 +98,15 @@ names(variable_weights) <- paste0("variable_",all_metar_vars)
 # WEIGHTS FOR THE INDIVIDUAL TIME STEPS (GIVE MOST WEIGHT TO THE LATEST TIMESTEP AND DECREASE RAPIDLY AS THE FURTHER AWAY IN THE PAST THE WEATHER SITUATION IS)
 # The equation is taken as provided from Tuba and Bottyan, 2016
 number_of_timesteps <- 12
-baseline_number <- 2
+baseline_number <- 1.8
 timestep_weights <- (baseline_number^(number_of_timesteps-seq(0,number_of_timesteps-1)-1))/((2^number_of_timesteps)-1)
 timestep_weights <- timestep_weights / timestep_weights[1]
-plot(timestep_weights)
+# # Plotting the used timestep weighting function
+# filename <- paste0("png(\"/data/statcal/results/R_projects/figures/random_figures/analogue_forecasts_time_weighting_baseline_number_",baseline_number,".png\", width = 1800, height = 1200, units = \"px\", pointsize = 12,res=200)")
+# eval(parse(text=filename))
+# plot(timestep_weights,main=paste0("baseline_number ",baseline_number))
+# dev.off()
+# rm(filename)
 rm(number_of_timesteps)
 rm(baseline_number)
 
@@ -132,10 +140,13 @@ max_gap_in_hours <- 3
 # ASSIGNING RESULT ARRAYS
 # Result array covering visibility forecasts for all stations and forecast lengths
 # (for converting integers to posixct see with_tz(as.POSIXct(as.integer(dimnames(analogue_forecasts)[[1]]), origin="1970-01-01 00:00:00 UTC"),tzone = "UTC"))
-analogue_forecasts <- array(NA,dim = c(length(all_forecast_times),length(all_station_ids),forecast_time_in_hours+1))
+# This is for all stations, but for parallel computing include only one station # analogue_forecasts <- array(NA,dim = c(length(all_forecast_times),length(all_station_ids),forecast_time_in_hours+1))
+analogue_forecasts <- array(NA,dim = c(length(all_forecast_times),1,forecast_time_in_hours+1))
 dimnames(analogue_forecasts)[[1]] = as.POSIXct(all_forecast_times)
-dimnames(analogue_forecasts)[[2]] = all_station_ids
+# dimnames(analogue_forecasts)[[2]] = all_station_ids
+dimnames(analogue_forecasts)[[2]] = 1
 dimnames(analogue_forecasts)[[3]] = seq(0,forecast_time_in_hours)
+
 # Result array covering data availability for all stations/variables
 all_available_data <- as.data.frame(matrix(NA, nrow = length(all_station_ids), ncol = length(all_metar_vars)))
 dimnames(all_available_data)[[1]] <- all_station_ids
@@ -150,7 +161,7 @@ names(all_available_data_timesteps_no) <- all_station_ids
 
 # Going through one station at a time
 # station_id_no <- 20 # Tampere Pirkkala
-for (station_id_no in c(8,16,20,19,26,11)) {
+foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar% {
   print(station_id_no)
       
   ### Loading sorted METAR station data ###
@@ -161,6 +172,7 @@ for (station_id_no in c(8,16,20,19,26,11)) {
   # How much data does each variable have? Saving data availability to matrix covering all stations
   available_data <- unlist(lapply(station_data[,-1],function (x) {sum(!is.na(x))})) / do.call(dim,list(x=station_data))[1] * 100
   all_available_data[match(station_id_no,all_station_ids), match(names(available_data),dimnames(all_available_data)[[2]])] <- available_data
+  save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_pct"),list="available_data")
   rm(available_data)
   
   # Interpolating missing values using LINEAR interpolation
@@ -169,6 +181,7 @@ for (station_id_no in c(8,16,20,19,26,11)) {
   # How much data does each INTERPOLATED variable have? Saving data availability to matrix covering all stations
   available_data <- unlist(lapply(station_data[,-1],function (x) {sum(!is.na(x))})) / do.call(dim,list(x=station_data))[1] * 100
   all_available_data_interpolated[match(station_id_no,all_station_ids), match(names(available_data),dimnames(all_available_data_interpolated)[[2]])] <- available_data
+  save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_interpolated_pct"),list="available_data")
   rm(available_data)
   
   # If data is completely empty, remove loaded data vector and move onto next month
@@ -191,11 +204,14 @@ for (station_id_no in c(8,16,20,19,26,11)) {
     training_rows <- rep(NA,dim(station_data)[1])
     for (row in (length(timestep_weights)):(dim(station_data)[1]-2*forecast_time_in_hours)) {
       training_rows[row] <- (sum(is.na(station_data[((row-length(timestep_weights)+1):(row+2*forecast_time_in_hours)),(which(!is.na(variable_weights))+1)]))==0)
-      print(row)
+      # print(row)
     }
     rm(row)
     # Saving the number of training data rows to result matrix
-    all_available_data_timesteps_no[which(names(all_available_data_timesteps_no)==station_id_no)] <- sum(training_rows==TRUE,na.rm=TRUE)
+    available_data_timesteps_no_station <- sum(training_rows==TRUE,na.rm=TRUE)
+    all_available_data_timesteps_no[which(names(all_available_data_timesteps_no)==station_id_no)] <- available_data_timesteps_no_station
+    save(file=paste0(data_directory_output,"station_id_",station_id_no,"_available_data_timesteps_no.RData"),list="available_data_timesteps_no_station")
+    rm(available_data_timesteps_no_station)
     
     # Creating similarity matrix for the station (every time stamp has a mutual similarity so that loop has to calculate this similarity only once)
     # Rows in the similarity matrix correspond to dates being predicted, and columns to all training_rows which are available to create forecasts
@@ -227,9 +243,9 @@ for (station_id_no in c(8,16,20,19,26,11)) {
         # similarity_indices <- rep(NA,length(training_rows2))
         # Going through training rows one-by-one)
         for (row2 in training_rows2) {
+          print(row2)
           # Only proceeding if the similarity between these two stations has not been calculated earlier
-          if (is.na(similarity_matrix[match(row2,dimnames(similarity_matrix)[[1]]),match(row1,dimnames(similarity_matrix)[[2]])])) {
-            # print(row2)
+          if (is.na(similarity_matrix[match(row1,dimnames(similarity_matrix)[[1]]),match(row2,dimnames(similarity_matrix)[[2]])])) {
             training_data_history <- station_data[((row2-length(timestep_weights)+1):row2),(which(!is.na(variable_weights))+1)]
             training_data_difference <- NA*training_data
             # Variables with similarities defined using absolute difference
@@ -250,8 +266,12 @@ for (station_id_no in c(8,16,20,19,26,11)) {
             
             # Interpolating similarity values between those defined initially in the script (two lists in mapply: fuzzy sets and training_data_difference)
             training_data_difference <- mapply(function (x,y) approx(x,similarity_values,y,yleft=0,yright=0)[[2]], x=all_fuzzy_sets[which(!is.na(variable_weights))], y=training_data_difference)
-            # Weighting the variable/time step -dependent similarity values
+            # Weighting the variable/time step -dependent similarity values and assigning to similarity matrix
+            # Saving value to both possible places: The first is always saved as they are defined by row1 (time stamp defined in all_forecast_times) and row2 (time stamp defined in training_rows2). The second is saved only on some cases as it has requirements: 1) row2 has to be among all_forecast_times and 2) timestep row1 has to have also future data for the forecast_time_in_hours 3) row2 cannot get values in the vicinity of row1 in the first place, as they are constrained by proximity_in_days
             similarity_matrix[match(row1,dimnames(similarity_matrix)[[1]]),match(row2,dimnames(similarity_matrix)[[2]])] <- sum(weight_matrix[(dim(weight_matrix)[1]:1),which(!is.na(variable_weights))] * training_data_difference)
+            if (!is.na(match(row2,dimnames(similarity_matrix)[[1]])) & !is.na(match(row1,dimnames(similarity_matrix)[[2]]))) {
+              similarity_matrix[match(row2,dimnames(similarity_matrix)[[1]]),match(row1,dimnames(similarity_matrix)[[2]])] <- sum(weight_matrix[(dim(weight_matrix)[1]:1),which(!is.na(variable_weights))] * training_data_difference)
+            }
           } else {
             next
           }
@@ -261,22 +281,23 @@ for (station_id_no in c(8,16,20,19,26,11)) {
     }
     rm(row1)
     
-    plot(similarity_matrix[33,])
-    station_data$obstime[as.numeric(dimnames(similarity_matrix)[[2]][which(is.na(similarity_matrix[33,]))])]
-    station_data$obstime[as.numeric(dimnames(similarity_matrix)[[1]][33])]
+    # plot(similarity_matrix[33,])
+    # station_data$obstime[as.numeric(dimnames(similarity_matrix)[[2]][which(is.na(similarity_matrix[33,]))])]
+    # station_data$obstime[as.numeric(dimnames(similarity_matrix)[[1]][33])]
     
     # FROM THE CALCULATED SIMILARITY MATRIX, SELECT THE DETERMINISTIC FORECASTS MOST SIMILAR TO CURRENT SITUATION
     for (forecast_time_stamp in 1:length(all_forecast_times)) {
       station_data_index <- as.numeric(dimnames(similarity_matrix)[[2]][which(similarity_matrix[forecast_time_stamp,]==sort(similarity_matrix[forecast_time_stamp,],decreasing=TRUE,na.last=TRUE)[deterministic_value_used])])
       if (!length(station_data_index)==FALSE) {
-        analogue_forecasts[forecast_time_stamp,all_station_ids[station_id_no],] <- station_data$`515`[station_data_index:(station_data_index+forecast_time_in_hours)]
+        # analogue_forecasts[forecast_time_stamp,all_station_ids[station_id_no],] <- station_data$`515`[station_data_index:(station_data_index+forecast_time_in_hours)]
+        analogue_forecasts[forecast_time_stamp,1,] <- station_data$`515`[station_data_index:(station_data_index+forecast_time_in_hours)]
       }
       rm(station_data_index)
     }
     rm(forecast_time_stamp)
     
     # Making analogue forecasts for the station into same format as other model data and save it to a file
-    analogue_forecasts_station <- melt(analogue_forecasts[,all_station_ids[station_id_no],])
+    analogue_forecasts_station <- melt(analogue_forecasts[,1,])
     analogue_forecasts_station[,2] <- analogue_forecasts_station[,1] + analogue_forecasts_station[,2]*3600
     analogue_forecasts_station <- analogue_forecasts_station[order(analogue_forecasts_station[,1],analogue_forecasts_station[,2]),]
     analogue_forecasts_station[,1:2] <- lapply(analogue_forecasts_station[,1:2],function(x) {with_tz(as.POSIXct(as.integer(x), origin="1970-01-01 00:00:00 UTC"),tzone = "UTC")})
@@ -290,7 +311,7 @@ for (station_id_no in c(8,16,20,19,26,11)) {
 }
 rm(station_id_no)
 
-save(file=paste0(data_directory_output,"all_stations_analogies.RData"),list="analogue_forecasts")
-save(file=paste0(data_directory_output,"all_available_data_pct.RData"),list="all_available_data")
-save(file=paste0(data_directory_output,"all_available_data_interpolated_pct.RData"),list="all_available_data_interpolated")
-save(file=paste0(data_directory_output,"all_available_data_timesteps_no.RData"),list="all_available_data_timesteps_no")
+# save(file=paste0(data_directory_output,"all_stations_analogies.RData"),list="analogue_forecasts")
+# save(file=paste0(data_directory_output,"all_available_data_pct.RData"),list="all_available_data")
+# save(file=paste0(data_directory_output,"all_available_data_interpolated_pct.RData"),list="all_available_data_interpolated")
+# save(file=paste0(data_directory_output,"all_available_data_timesteps_no.RData"),list="all_available_data_timesteps_no")
