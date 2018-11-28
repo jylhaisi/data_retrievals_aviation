@@ -1,4 +1,4 @@
-# This script loads allMETARvars from RData files and sorts the data into stationwise files according to timestamp/variable number.
+# # This script loads allMETARvars from RData files and sorts the data into stationwise files according to timestamp/variable number.
 rm(list=ls())
 
 loadRData <- function(fileName){
@@ -11,7 +11,7 @@ loadRData <- function(fileName){
 source("../point_data_analysis/load_libraries_tables_and_open_connections.R")
 source("hae_aviation_scripts.R")
 
-# THIS COMMENTED PART ONLY NEEDS TO BE RUN ONLY ONCE AS IT SAVES THE RESULTS TO FILES! THIS TAKES AWAY ALL THE NOT-NEEDED DATA FROM THE MONTHLY DATA FILES
+# # THIS COMMENTED PART ONLY NEEDS TO BE RUN ONLY ONCE AS IT SAVES THE RESULTS TO FILES! THIS TAKES AWAY ALL THE NOT-NEEDED DATA FROM THE MONTHLY DATA FILES (THOSE OBSERVATIONS NOT DONE ON MINUTES 20 OR 50)
 # data_directory <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/")
 # data_directory_output <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/only_20_50_observations/")
 # # First altering result files so that they do not need to be individually altered in workspace for each station_id_no
@@ -23,20 +23,37 @@ source("hae_aviation_scripts.R")
 #       month1 <- month
 #     }
 #     print(paste(year,month1))
+#     
 #     ### Loading manual METAR data ###
 #     data_file <- paste0(data_directory,"all_METARvarshavainnot_METAR_",year,"_",month1,"_8_allstations.RData")
-#     month_data <- loadRData(data_file)
-#     
-#     # If data is not empty, remove all other than auto observations and observations that are not done on conventional observation times
-#     if (do.call(dim,list(x=month_data))[1]!=0) {
+#     month_data1 <- loadRData(data_file)
+#     # If data is not empty, remove all observations that are not done on conventional observation times
+#     if (do.call(dim,list(x=month_data1))[1]!=0) {
 #       # Only taking into account auto-METARS even if the data should not contain anything else (message_type_id==8)
-#       month_data <- subset(month_data,message_type_id==8)
+#       month_data1 <- subset(month_data1,message_type_id==8)
 #       # Removing timestamps which are not either 20 past or 10 to (THERE IS QUITE A BIT OF THESE! THE SENSITIVITY OF THE RESULTS [ESPECIALLY DATA AVAILABILITY] TO THIS PHASE CAN BE SUBSTANTIAL!)
-#       month_data <- month_data[which(format(month_data[["obstime"]],"%M") %in% c("20","50")),]
+#       month_data1 <- month_data1[which(format(month_data1[["obstime"]],"%M") %in% c("20","50")),]
+#     }
+#     rm(data_file)
+#     ### Loading auto METAR data ###
+#     data_file <- paste0(data_directory,"all_METARvarshavainnot_METAR_",year,"_",month1,"_1_allstations.RData")
+#     month_data2 <- loadRData(data_file)
+#     # If data is not empty, remove all observations that are not done on conventional observation times
+#     if (do.call(dim,list(x=month_data2))[1]!=0) {
+#       # Only taking into account auto-METARS even if the data should not contain anything else (message_type_id==8)
+#       month_data2 <- subset(month_data2,message_type_id==1)
+#       # Removing timestamps which are not either 20 past or 10 to (THERE IS QUITE A BIT OF THESE! THE SENSITIVITY OF THE RESULTS [ESPECIALLY DATA AVAILABILITY] TO THIS PHASE CAN BE SUBSTANTIAL!)
+#       month_data2 <- month_data2[which(format(month_data2[["obstime"]],"%M") %in% c("20","50")),]
+#     }
+#     rm(data_file)
+#     month_data <- rbind(month_data1,month_data2)
+#     rm(month_data1)
+#     rm(month_data2)
+#     if (!length(month_data)==FALSE) {
+#       month_data <- month_data[with(month_data, order(station_id, obstime, param_id, message_type_id)),]
 #     }
 #     # Saving slightly altered data
-#     save(file=paste0(data_directory_output,year,"_",month,".RData"),month_data)
-#     rm(data_file)
+#     save(file=paste0(data_directory_output,year,"_",month,".RData"),month_data,compress=TRUE)
 #     rm(month_data)
 #     rm(month1)
 #   }
@@ -63,7 +80,7 @@ names(assigned_data_frame)[2:dim(assigned_data_frame)[2]] <- paste0(all_metar_va
 assigned_data_frame[,1] <- all_time_stamps
 rm(all_time_stamps)
 # Going through one station at a time
-for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
+for (station_id_no in all_station_ids[217:length(all_station_ids)]) {
   print(station_id_no)
   assigned_station_id <- paste0("station_id_",station_id_no)
   assign(assigned_station_id, assigned_data_frame)
@@ -79,7 +96,7 @@ for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
       ### Loading manual METAR data ###
       data_file <- paste0(data_directory,year,"_",month,".RData")
       month_data <- loadRData(data_file)
-      
+
       # If data is empty, remove loaded data vector and move onto next month
       if (do.call(dim,list(x=month_data))[1]==0) {
         rm(data_file)
@@ -100,7 +117,7 @@ for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
         rm(variable)
         rm(station_id_data)
         # print(station_id_no)
-        
+
         rm(data_file)
         rm(month_data)
       }
@@ -109,8 +126,8 @@ for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
     rm(month)
   }
   rm(year)
-  
-  save(file=paste0(data_directory_sorted,assigned_station_id,"_sorted.RData"),list=assigned_station_id)
+
+  save(file=paste0(data_directory_sorted,assigned_station_id,"_sorted.RData"),list=assigned_station_id,compress=TRUE)
   rm(assigned_station_id)
 }
 rm(station_id_no)

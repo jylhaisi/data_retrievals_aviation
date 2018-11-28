@@ -32,8 +32,10 @@ all_station_ids <- all_station_ids[order(all_station_ids$id),]
 all_metar_vars <- c(1,4,10,20,501,502,503,504,505,506,507,508,513,514,515,516,517,521,522,745,746,747,748,840,888,889)
 # begin_date=as.POSIXct("2017-07-01 00:20:00 GMT",tz="GMT")
 # end_date=as.POSIXct("2017-07-25 06:20:00 GMT",tz="GMT")
-begin_date=as.POSIXct("2016-11-01 00:20:00 GMT",tz="GMT")
-end_date=as.POSIXct("2017-09-01 00:20:00 GMT",tz="GMT")
+# begin_date=as.POSIXct("2016-11-01 00:20:00 GMT",tz="GMT")
+# end_date=as.POSIXct("2017-09-01 00:20:00 GMT",tz="GMT")
+begin_date=as.POSIXct("2017-09-01 00:20:00 GMT",tz="GMT")
+end_date=as.POSIXct("2018-01-01 00:20:00 GMT",tz="GMT")
 # end_date=as.POSIXct(Sys.time(),tz="GMT")
 all_forecast_times <- seq(from=begin_date, to=end_date, by="3 hour")
 
@@ -161,7 +163,7 @@ names(all_available_data_timesteps_no) <- all_station_ids
 
 # Going through one station at a time
 # station_id_no <- 20 # Tampere Pirkkala
-foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar% {
+foreach (station_id_no=c(8,11,16,19,20,27,65,70,103,158,184,187,190)) %dopar% { # foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar% {
   print(station_id_no)
       
   ### Loading sorted METAR station data ###
@@ -310,6 +312,14 @@ foreach (station_id_no=c(8,16,20,19,26,11,24,22,6,7,18,1,4,13,2,5,29,3)) %dopar%
 
 }
 rm(station_id_no)
+
+
+# Checking how much missing values are there in analogy forecasts
+for (station_id_no in c(8,11,16,19,20,27,65,70,103,158,184,187,190)) {
+  tempvar <- loadRData(paste0("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/only_20_50_observations/sorted/analogy_forecasts/station_id_",station_id_no,"_analogies.RData"))
+  print(paste(station_id_no,(round(100*sum(is.na(tempvar$value))/dim(tempvar)[1],digits=2))))
+  rm(tempvar)
+}
 
 # save(file=paste0(data_directory_output,"all_stations_analogies.RData"),list="analogue_forecasts")
 # save(file=paste0(data_directory_output,"all_available_data_pct.RData"),list="all_available_data")

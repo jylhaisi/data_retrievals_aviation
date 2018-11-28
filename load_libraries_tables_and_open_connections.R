@@ -65,16 +65,16 @@ station_idt_conversion <- station_idt_conversion[!duplicated(station_idt_convers
 drv_psql <- dbDriver("PostgreSQL",fetch.default.rec=100000000)
 drv_ora <- dbDriver("Oracle")
 passwords <- read.csv("/data/statcal/infofiles_etc/passwords.txt",header=TRUE,stringsAsFactors = FALSE)
-# Read-only MOS
-con1 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[1,][1], user = passwords[1,][2], password = passwords[1,][3], dbname = passwords[1,][4])
-# Read-write MOS
-# # con1 <- RPostgreSQL::dbConnect(drv, host = passwords[2,][1], user = passwords[2,][2], password = passwords[2,][3], dbname = passwords[2,][4])
-# verif
-con2 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[3,][1], user = passwords[3,][2], password = passwords[3,][3], dbname = passwords[3,][4])
-# CLDB
-connect.string <- paste("(DESCRIPTION=","(ADDRESS=(PROTOCOL=tcp)(HOST=", passwords[4,][1], ")(PORT=1521))","(CONNECT_DATA=(SERVICE_NAME=", passwords[4,][4], ")))", sep = "")
-con3 <- ROracle::dbConnect(drv_ora, username = passwords[4,][2], password = passwords[4,][3], dbname = connect.string)
-rm(connect.string)
+# # Read-only MOS
+# con1 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[1,][1], user = passwords[1,][2], password = passwords[1,][3], dbname = passwords[1,][4])
+# # Read-write MOS
+# # # con1 <- RPostgreSQL::dbConnect(drv, host = passwords[2,][1], user = passwords[2,][2], password = passwords[2,][3], dbname = passwords[2,][4])
+# # verif
+# con2 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[3,][1], user = passwords[3,][2], password = passwords[3,][3], dbname = passwords[3,][4])
+# # CLDB
+# connect.string <- paste("(DESCRIPTION=","(ADDRESS=(PROTOCOL=tcp)(HOST=", passwords[4,][1], ")(PORT=1521))","(CONNECT_DATA=(SERVICE_NAME=", passwords[4,][4], ")))", sep = "")
+# con3 <- ROracle::dbConnect(drv_ora, username = passwords[4,][2], password = passwords[4,][3], dbname = connect.string)
+# rm(connect.string)
 # aviation
-con4 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[5,][1], user = passwords[5,][2], password = passwords[5,][3], dbname = passwords[5,][4])
+con4 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[1,][1], user = passwords[1,][2], password = passwords[1,][3], dbname = passwords[1,][4])
 rm(passwords)

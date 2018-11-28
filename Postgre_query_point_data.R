@@ -5,13 +5,17 @@ rm(list=ls())
 source("load_libraries_tables_and_open_connections.R")
 source("hae_aviation_scripts.R")
 
+# Lentokentat
+asemalista_suomalaiset_lentokentat <- read.csv("suomalaiset_lentokentat.csv",header=TRUE)
+asemalista_suomalaiset_lentokentat <- asemalista_suomalaiset_lentokentat[,-1]
 previ_ecmos_v_station_id <- asemalista_suomalaiset_lentokentat$wmon
 asemajoukko <- paste("suomalaiset_lentokentat",sep="")
 
 station_id <- "all"
+
 # Data is retrieved in one month chunks, as otherwise the extent would be too much
-for (year in 2000:2017) {
-  for (month in 1:12) {
+for (year in 2017:2017) {
+  for (month in 8:12) {
     if (month<10) {
       month1 <- paste("0",month,sep="")
     } else {
@@ -37,9 +41,9 @@ for (year in 2000:2017) {
     # message_type 1 on manuaalihavainnot, numero 8 autohavainnot, 0 on SPECI-havainnot
     for (message_type_id in c(0,1,8)) {
       saved_variable <- paste("havainnot_METAR_",year1,"_",month1,"_",message_type_id,"_allstations",sep="")
-      filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars",saved_variable,".RData",sep="")
+      filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/all_METARvars",saved_variable,".RData",sep="")
       eval(subs(saved_variable <- hae_havainnot_aviation(sel_AQU,station_id,message_type_id,month1,month2,year1,year2)))
-      eval(subs(save(saved_variable,file=filename)))
+      eval(subs(save(saved_variable,file=filename,compress=TRUE)))
       eval(subs(rm(saved_variable)))
     }
     rm(message_type_id)
@@ -47,16 +51,16 @@ for (year in 2000:2017) {
     rm(Id)
     
     
-    # # Haetaan pelkät tekstimuotoiset METAR:it
-    # saved_variable <- paste("teksti_METAR_",year1,"_",month1,"_allstations",sep="")
-    # filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
-    # eval(subs(saved_variable <- hae_sanomat_aviation(station_id,month1,month2,year1,year2)))
-    # eval(subs(save(saved_variable,file=filename)))
-    # eval(subs(rm(saved_variable)))
-    # rm(month1)
-    # rm(month2)
-    # rm(year1)
-    # rm(year2)
+    # Haetaan pelkät tekstimuotoiset METAR:it
+    saved_variable <- paste("teksti_METAR_",year1,"_",month1,"_allstations",sep="")
+    filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
+    eval(subs(saved_variable <- hae_sanomat_aviation(station_id,month1,month2,year1,year2)))
+    eval(subs(save(saved_variable,file=filename,compress=TRUE)))
+    eval(subs(rm(saved_variable)))
+    rm(month1)
+    rm(month2)
+    rm(year1)
+    rm(year2)
   }
   rm(month)
 }
@@ -73,54 +77,54 @@ rm(year)
 
 
 
-# ### MALLIENNUSTEIDEN HAKU AVIATION-TIETOKANNASTA ###
-# 
-# for (year in 2016:2017) {
-#   for (month in c(1:12)) {
-#     if (month<10) {
-#       month1 <- paste("0",month,sep="")
-#     } else {
-#       month1 <- month
-#     }
-#     year1 <- year
-#     if (month==12) {
-#       month2 <- "01"
-#       year2 <- year1 + 1
-#     } else if (month<9) {
-#       month2 <- paste("0",(month + 1),sep="")
-#       year2 <- year1
-#     } else {
-#       month2 <- month + 1
-#       year2 <- year1
-#     }
-#     
-#     # Näkyvyys HIMAN + mallin oma kaikki asemat kaikki mallit
-#     saved_variable <- paste("model_VIS_",year1,"_",month1,"_allstations",sep="")
-#     filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
-#     variables <- c(1232,10407,407,515)
-#     models <- c(1,2,3,4,5)
-#     eval(subs(saved_variable <- hae_model_aviation(station_id,variables,models,month1,month2,year1,year2)))
-#     eval(subs(save(saved_variable,file=filename)))
-#     eval(subs(rm(saved_variable)))
-#     
-#     # Lämpötila+dewpoint+tuuli+sade kaikki asemat Harmonie+EC
-#     saved_variable <- paste("model_othervars_",year1,"_",month1,"_allstations",sep="")
-#     filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
-#     variables <- c(4,10,21,50)
-#     models <- c(1,5)
-#     eval(subs(saved_variable <- hae_model_aviation(station_id,variables,models,month1,month2,year1,year2)))
-#     eval(subs(save(saved_variable,file=filename)))
-#     eval(subs(rm(saved_variable)))
-#     
-#     
-#     rm(month1)
-#     rm(month2)
-#     rm(year1)
-#     rm(year2)
-#   }
-#   rm(month)
-# }
-# rm(year)
+### MALLIENNUSTEIDEN HAKU AVIATION-TIETOKANNASTA ###
+
+for (year in 2017:2017) {
+  for (month in c(8:12)) {
+    if (month<10) {
+      month1 <- paste("0",month,sep="")
+    } else {
+      month1 <- month
+    }
+    year1 <- year
+    if (month==12) {
+      month2 <- "01"
+      year2 <- year1 + 1
+    } else if (month<9) {
+      month2 <- paste("0",(month + 1),sep="")
+      year2 <- year1
+    } else {
+      month2 <- month + 1
+      year2 <- year1
+    }
+
+    # Näkyvyys HIMAN + mallin oma kaikki asemat kaikki mallit
+    saved_variable <- paste("model_VIS_",year1,"_",month1,"_allstations",sep="")
+    filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
+    variables <- c(1232,10407,407,515)
+    models <- c(1,2,3,4,5)
+    eval(subs(saved_variable <- hae_model_aviation(station_id,variables,models,month1,month2,year1,year2)))
+    eval(subs(save(saved_variable,file=filename,compress=TRUE)))
+    eval(subs(rm(saved_variable)))
+
+    # Lämpötila+dewpoint+tuuli+sade kaikki asemat Harmonie+EC
+    saved_variable <- paste("model_othervars_",year1,"_",month1,"_allstations",sep="")
+    filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
+    variables <- c(4,10,21,50)
+    models <- c(1,5)
+    eval(subs(saved_variable <- hae_model_aviation(station_id,variables,models,month1,month2,year1,year2)))
+    eval(subs(save(saved_variable,file=filename,compress=TRUE)))
+    eval(subs(rm(saved_variable)))
+
+
+    rm(month1)
+    rm(month2)
+    rm(year1)
+    rm(year2)
+  }
+  rm(month)
+}
+rm(year)
 
 
 

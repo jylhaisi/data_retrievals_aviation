@@ -17,7 +17,9 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> # This script loads allMETARvars from RData files and sorts the data into stationwise files according to timestamp/variable number.
+[Previously saved workspace restored]
+
+> # # This script loads allMETARvars from RData files and sorts the data into stationwise files according to timestamp/variable number.
 > rm(list=ls())
 > 
 > loadRData <- function(fileName){
@@ -108,6 +110,13 @@ The following objects are masked from ‘package:base’:
 
 Loading required package: fields
 Loading required package: maps
+
+Attaching package: ‘LatticeKrig’
+
+The following objects are masked from ‘package:fields’:
+
+    which.max.image, which.max.matrix
+
 Loading required package: sp
 Checking rgeos availability: FALSE
  	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
@@ -216,9 +225,24 @@ The following object is masked from ‘package:nlme’:
 
     getResponse
 
+Loading required package: geosphere
+
+Attaching package: ‘geosphere’
+
+The following object is masked from ‘package:insol’:
+
+    daylength
+
+
+Attaching package: ‘MOSpointutils’
+
+The following object is masked _by_ ‘.GlobalEnv’:
+
+    loadRData
+
 > source("hae_aviation_scripts.R")
 > 
-> # THIS COMMENTED PART ONLY NEEDS TO BE RUN ONLY ONCE AS IT SAVES THE RESULTS TO FILES! THIS TAKES AWAY ALL THE NOT-NEEDED DATA FROM THE MONTHLY DATA FILES
+> # # THIS COMMENTED PART ONLY NEEDS TO BE RUN ONLY ONCE AS IT SAVES THE RESULTS TO FILES! THIS TAKES AWAY ALL THE NOT-NEEDED DATA FROM THE MONTHLY DATA FILES (THOSE OBSERVATIONS NOT DONE ON MINUTES 20 OR 50)
 > # data_directory <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/")
 > # data_directory_output <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/all_METARvars/only_20_50_observations/")
 > # # First altering result files so that they do not need to be individually altered in workspace for each station_id_no
@@ -230,20 +254,37 @@ The following object is masked from ‘package:nlme’:
 > #       month1 <- month
 > #     }
 > #     print(paste(year,month1))
+> #     
 > #     ### Loading manual METAR data ###
 > #     data_file <- paste0(data_directory,"all_METARvarshavainnot_METAR_",year,"_",month1,"_8_allstations.RData")
-> #     month_data <- loadRData(data_file)
-> #     
-> #     # If data is not empty, remove all other than auto observations and observations that are not done on conventional observation times
-> #     if (do.call(dim,list(x=month_data))[1]!=0) {
+> #     month_data1 <- loadRData(data_file)
+> #     # If data is not empty, remove all observations that are not done on conventional observation times
+> #     if (do.call(dim,list(x=month_data1))[1]!=0) {
 > #       # Only taking into account auto-METARS even if the data should not contain anything else (message_type_id==8)
-> #       month_data <- subset(month_data,message_type_id==8)
+> #       month_data1 <- subset(month_data1,message_type_id==8)
 > #       # Removing timestamps which are not either 20 past or 10 to (THERE IS QUITE A BIT OF THESE! THE SENSITIVITY OF THE RESULTS [ESPECIALLY DATA AVAILABILITY] TO THIS PHASE CAN BE SUBSTANTIAL!)
-> #       month_data <- month_data[which(format(month_data[["obstime"]],"%M") %in% c("20","50")),]
+> #       month_data1 <- month_data1[which(format(month_data1[["obstime"]],"%M") %in% c("20","50")),]
+> #     }
+> #     rm(data_file)
+> #     ### Loading auto METAR data ###
+> #     data_file <- paste0(data_directory,"all_METARvarshavainnot_METAR_",year,"_",month1,"_1_allstations.RData")
+> #     month_data2 <- loadRData(data_file)
+> #     # If data is not empty, remove all observations that are not done on conventional observation times
+> #     if (do.call(dim,list(x=month_data2))[1]!=0) {
+> #       # Only taking into account auto-METARS even if the data should not contain anything else (message_type_id==8)
+> #       month_data2 <- subset(month_data2,message_type_id==1)
+> #       # Removing timestamps which are not either 20 past or 10 to (THERE IS QUITE A BIT OF THESE! THE SENSITIVITY OF THE RESULTS [ESPECIALLY DATA AVAILABILITY] TO THIS PHASE CAN BE SUBSTANTIAL!)
+> #       month_data2 <- month_data2[which(format(month_data2[["obstime"]],"%M") %in% c("20","50")),]
+> #     }
+> #     rm(data_file)
+> #     month_data <- rbind(month_data1,month_data2)
+> #     rm(month_data1)
+> #     rm(month_data2)
+> #     if (!length(month_data)==FALSE) {
+> #       month_data <- month_data[with(month_data, order(station_id, obstime, param_id, message_type_id)),]
 > #     }
 > #     # Saving slightly altered data
-> #     save(file=paste0(data_directory_output,year,"_",month,".RData"),month_data)
-> #     rm(data_file)
+> #     save(file=paste0(data_directory_output,year,"_",month,".RData"),month_data,compress=TRUE)
 > #     rm(month_data)
 > #     rm(month1)
 > #   }
@@ -270,7 +311,7 @@ The following object is masked from ‘package:nlme’:
 > assigned_data_frame[,1] <- all_time_stamps
 > rm(all_time_stamps)
 > # Going through one station at a time
-> for (station_id_no in all_station_ids[359:length(all_station_ids)]) {
+> for (station_id_no in all_station_ids[217:length(all_station_ids)]) {
 +   print(station_id_no)
 +   assigned_station_id <- paste0("station_id_",station_id_no)
 +   assign(assigned_station_id, assigned_data_frame)
@@ -286,7 +327,7 @@ The following object is masked from ‘package:nlme’:
 +       ### Loading manual METAR data ###
 +       data_file <- paste0(data_directory,year,"_",month,".RData")
 +       month_data <- loadRData(data_file)
-+       
++ 
 +       # If data is empty, remove loaded data vector and move onto next month
 +       if (do.call(dim,list(x=month_data))[1]==0) {
 +         rm(data_file)
@@ -307,7 +348,7 @@ The following object is masked from ‘package:nlme’:
 +         rm(variable)
 +         rm(station_id_data)
 +         # print(station_id_no)
-+         
++ 
 +         rm(data_file)
 +         rm(month_data)
 +       }
@@ -316,10 +357,152 @@ The following object is masked from ‘package:nlme’:
 +     rm(month)
 +   }
 +   rm(year)
-+   
-+   save(file=paste0(data_directory_sorted,assigned_station_id,"_sorted.RData"),list=assigned_station_id)
++ 
++   save(file=paste0(data_directory_sorted,assigned_station_id,"_sorted.RData"),list=assigned_station_id,compress=TRUE)
 +   rm(assigned_station_id)
 + }
+[1] 218
+[1] 219
+[1] 220
+[1] 221
+[1] 222
+[1] 223
+[1] 224
+[1] 225
+[1] 226
+[1] 227
+[1] 228
+[1] 229
+[1] 230
+[1] 231
+[1] 232
+[1] 233
+[1] 234
+[1] 235
+[1] 236
+[1] 237
+[1] 238
+[1] 239
+[1] 240
+[1] 241
+[1] 242
+[1] 243
+[1] 244
+[1] 245
+[1] 246
+[1] 247
+[1] 248
+[1] 249
+[1] 250
+[1] 251
+[1] 252
+[1] 253
+[1] 254
+[1] 256
+[1] 257
+[1] 258
+[1] 259
+[1] 260
+[1] 261
+[1] 262
+[1] 263
+[1] 264
+[1] 265
+[1] 266
+[1] 267
+[1] 268
+[1] 269
+[1] 270
+[1] 271
+[1] 272
+[1] 273
+[1] 274
+[1] 275
+[1] 276
+[1] 277
+[1] 278
+[1] 279
+[1] 280
+[1] 281
+[1] 282
+[1] 283
+[1] 284
+[1] 285
+[1] 286
+[1] 287
+[1] 288
+[1] 289
+[1] 290
+[1] 291
+[1] 292
+[1] 293
+[1] 294
+[1] 295
+[1] 296
+[1] 297
+[1] 298
+[1] 299
+[1] 300
+[1] 301
+[1] 302
+[1] 303
+[1] 304
+[1] 305
+[1] 306
+[1] 307
+[1] 308
+[1] 309
+[1] 310
+[1] 311
+[1] 312
+[1] 313
+[1] 314
+[1] 315
+[1] 316
+[1] 317
+[1] 318
+[1] 319
+[1] 320
+[1] 321
+[1] 322
+[1] 323
+[1] 324
+[1] 325
+[1] 326
+[1] 327
+[1] 328
+[1] 329
+[1] 330
+[1] 331
+[1] 332
+[1] 333
+[1] 334
+[1] 335
+[1] 336
+[1] 337
+[1] 338
+[1] 339
+[1] 340
+[1] 341
+[1] 342
+[1] 343
+[1] 344
+[1] 345
+[1] 346
+[1] 347
+[1] 348
+[1] 349
+[1] 350
+[1] 351
+[1] 352
+[1] 353
+[1] 354
+[1] 355
+[1] 356
+[1] 357
+[1] 358
+[1] 359
+[1] 360
 [1] 361
 [1] 362
 [1] 363
@@ -363,5 +546,5 @@ The following object is masked from ‘package:nlme’:
 > rm(station_id_no)
 > 
 > proc.time()
-   user  system elapsed 
-811.681  53.794 881.504 
+      user     system    elapsed 
+ 97664.793    888.722 100910.586 
