@@ -76,5 +76,5 @@ passwords <- read.csv("/data/statcal/infofiles_etc/passwords.txt",header=TRUE,st
 # con3 <- ROracle::dbConnect(drv_ora, username = passwords[4,][2], password = passwords[4,][3], dbname = connect.string)
 # rm(connect.string)
 # aviation
-con4 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[1,][1], user = passwords[1,][2], password = passwords[1,][3], dbname = passwords[1,][4])
+con4 <- RPostgreSQL::dbConnect(drv_psql, host = passwords[5,][1], user = passwords[5,][2], password = passwords[5,][3], dbname = passwords[5,][4])
 rm(passwords)

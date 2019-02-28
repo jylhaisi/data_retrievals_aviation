@@ -18,6 +18,7 @@ hae_havainnot_aviation <- function(sel_AQU,station_id,message_type_id,month1,mon
   } else {
     sql_query <- paste0("select mc.station_id, mc.ttime, mc.message_type_id, p.id, mv.rvalue from met_value mv, parameter p, message_content mc, station s where mc.id=mv.parent_id and s.id=mc.station_id and p.id=mv.parameter_id and mc.ttime between to_date('",year1,month1,"010001','YYYYMMDDHH24MI') and to_date('",year2,month2,"010000','YYYYMMDDHH24MI') ",sel_AQU," and s.id=",station_id," and mc.message_type_id IN(",message_type_id,");")
   }
+  # print(sql_query)
   haku <- dbSendQuery(con4, sql_query)
   havainnot <- fetch(haku)
   rm(sql_query)
