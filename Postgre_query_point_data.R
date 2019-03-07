@@ -116,7 +116,16 @@ for (year in 2017:2017) {
     eval(subs(save(saved_variable,file=filename,compress=TRUE)))
     eval(subs(rm(saved_variable)))
 
-
+    # Pilven alaraja
+    saved_variable <- paste("model_CLB_",year1,"_",month1,"_allstations",sep="")
+    filename <- paste("/data/statcal/results/R_projects/data_retrievals_aviation/",saved_variable,".RData",sep="")
+    variables <- c(500,1229)
+    models <- c(1,2,3,4,5)
+    eval(subs(saved_variable <- hae_model_aviation(station_id,variables,models,month1,month2,year1,year2)))
+    eval(subs(save(saved_variable,file=filename,compress=TRUE)))
+    eval(subs(rm(saved_variable))
+    
+    
     rm(month1)
     rm(month2)
     rm(year1)
