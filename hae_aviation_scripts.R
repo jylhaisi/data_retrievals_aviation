@@ -63,22 +63,27 @@ hae_havainnot_aviation <- function(sel_AQU,station_id,message_type_id,month1,mon
       # rm(l)
     }
     
+    if (table_form=="wide") {
+      # käännä kapea taulu leveäksi tidyversen spread-funktiolla
+      library(tidyverse)
+      havainnot <- as.data.frame(havainnot %>% tidyr::pivot_wider(names_from = param_id, values_from = value, names_sort = TRUE))
+    }
     
   }
 
   havainnot
 }
 
-hae_sanomat_aviation <- function(station_id,month1,month2,year1,year2) {
+hae_sanomat_aviation <- function(station_id,message_type_id,month1,month2,year1,year2) {
   
   METAR_teksti <- as.data.frame(matrix(NA,0,0))
   
   # Haetaan Teron AQU-tietokannasta METAR-havaintoja lentokentille ja tallennetaan tämä tieto muuttujaan havainnot
   # HUOM! MessagetypeId=1 ottaa huomioon vain manuaaliset METARIT, auto-METARIt ovat arvolla 8!
   if (station_id=="all") {
-    sql_query <- paste0("select mc.station_id, mc.ttime, message_type_id, mc.content from message_content mc where ttime between to_date('",year1,month1,"010001','YYYYMMDDHH24MI') and to_date('",year2,month2,"010000','YYYYMMDDHH24MI') and message_type_id IN (0,1,8);")
+    sql_query <- paste0("select mc.station_id, mc.ttime, message_type_id, mc.content from message_content mc where ttime between to_date('",year1,month1,"010001','YYYYMMDDHH24MI') and to_date('",year2,month2,"010000','YYYYMMDDHH24MI') and message_type_id IN (",message_type_id,");")
   } else {
-    sql_query <- paste0("select mc.station_id, mc.ttime, message_type_id, mc.content from message_content mc where ttime between to_date('",year1,month1,"010001','YYYYMMDDHH24MI') and to_date('",year2,month2,"010000','YYYYMMDDHH24MI') and mc.station_id=",station_id," and message_type_id IN (0,1,8);")
+    sql_query <- paste0("select mc.station_id, mc.ttime, message_type_id, mc.content from message_content mc where ttime between to_date('",year1,month1,"010001','YYYYMMDDHH24MI') and to_date('",year2,month2,"010000','YYYYMMDDHH24MI') and mc.station_id=",station_id," and message_type_id IN (",message_type_id,");")
   }
   haku <- dbSendQuery(con4, sql_query)
   METAR_teksti <- fetch(haku)
