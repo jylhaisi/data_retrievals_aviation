@@ -39,10 +39,10 @@ for (year in 2019:2019) {
     }
     
     # Bypassing the loop and manually setting the retrieval interval here
-    month1 <- "05"
+    month1 <- "01"
     month2 <- "10"
-    year1 <- "2019"
-    year2 <- "2019"
+    year1 <- "2015"
+    year2 <- "2020"
     
     
     ### MANUAALISEN METAR-DATAN HAKU AVIATION-TIETOKANNASTA ###

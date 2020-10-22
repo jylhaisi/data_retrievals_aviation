@@ -45,8 +45,8 @@ hae_havainnot_aviation <- function(sel_AQU,station_id,message_type_id,month1,mon
     # # Ensin täytyy sortata aikajärjestykseen, jos data ei jostain syystä olisikaan sellaisessa.
     # havainnot <- havainnot[order(havainnot$obstime),]
     # Tämän jälkeen käydään yksi kerrallaan läpi vektoria ja keskiarvoistetaan duplikaattiarvot yhden desimaalin tarkkuuteen (tai jos on jopa useampia, niin kaikki saman ajanhetken arvot)
-    if (sum(duplicated(havainnot))>0) {
-      havainnot <- havainnot[-which(duplicated(havainnot)),]
+    if (sum(duplicated(havainnot[,c(2,4)]))>0) {
+      havainnot <- havainnot[-which(duplicated(havainnot[,c(2,4)])),]
       # for (l in 2:dim(havainnot)[1]) {
       #   if (l <= dim(havainnot)[1]) {
       #     if (havainnot$obstime[l]==havainnot$obstime[l-1]) {
